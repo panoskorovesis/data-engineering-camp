@@ -3,6 +3,7 @@
 
 import os
 import argparse
+import pyarrow.parquet as pq
 
 from time import time
 
@@ -21,16 +22,23 @@ def main(params):
     
     # the backup files are gzipped, and it's important to keep the correct extension
     # for pandas to be able to open the file
-    if url.endswith('.csv.gz'):
-        csv_name = 'output.csv.gz'
+    if url.endswith('.parquet.gz'):
+        parquet_name = 'output.parquet.gz'
     else:
-        csv_name = 'output.csv'
-
-    os.system(f"wget {url} -O {csv_name}")
+        parquet_name = 'output.parquet'
 
     engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
 
-    df_iter = pd.read_csv(csv_name, iterator=True, chunksize=100000)
+    os.system(f"wget {url} -O {parquet_name}")
+
+    # trips = pq.read_table('yellow_tripdata_2021-01.parquet')
+
+    # df = trips.to_pandas()
+
+    temp_df = pd.read_parquet(parquet_name, engine='pyarrow')
+    temp_df.to_csv('taxi.csv')
+
+    df_iter = pd.read_csv('taxi.csv', iterator=True, chunksize=100000)
 
     df = next(df_iter)
 
@@ -63,6 +71,7 @@ def main(params):
             break
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description='Ingest CSV data to Postgres')
 
     parser.add_argument('--user', required=True, help='user name for postgres')
