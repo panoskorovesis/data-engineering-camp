@@ -22,3 +22,8 @@ variable "BQ_DATASET" {
   type = string
   default = "trips_data_all"
 }
+
+variable "TABLE_NAME" {
+    type = string
+    default = "ny_trips"
+}
